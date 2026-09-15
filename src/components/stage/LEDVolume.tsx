@@ -8,6 +8,15 @@ export type LEDDisplayMode = "wireframe" | "solid" | "textured";
 interface LEDVolumeProps {
   config: MainLEDConfig;
   displayMode?: LEDDisplayMode;
+  /**
+   * Y coordinate (relative to platform surface, Y=0) of the panel's
+   * physical bottom edge. Defaults to 0 for backward compatibility, but
+   * callers should pass `calculateMainLEDBottomY(stage.mainLED,
+   * stage.platform)` from src/utils/ledMath.ts so the panel is
+   * positioned per the actual support-member measurement rather than
+   * assumed to start exactly at the platform surface.
+   */
+  bottomY?: number;
   /** Purely decorative visualization thickness in meters. NOT used for any coverage math. */
   visualThicknessM?: number;
 }
@@ -34,7 +43,8 @@ function buildMainLEDSurfaceGeometry(
   radius: number,
   height: number,
   startRad: number,
-  endRad: number
+  endRad: number,
+  bottomY: number
 ): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
 
@@ -49,7 +59,7 @@ function buildMainLEDSurfaceGeometry(
 
   for (let iv = 0; iv <= VERTICAL_SEGMENTS; iv++) {
     const v = iv / VERTICAL_SEGMENTS;
-    const y = v * height;
+    const y = bottomY + v * height;
 
     for (let ia = 0; ia <= ANGULAR_SEGMENTS; ia++) {
       const u = ia / ANGULAR_SEGMENTS;
@@ -93,6 +103,7 @@ function buildMainLEDSurfaceGeometry(
 export function LEDVolume({
   config,
   displayMode = "solid",
+  bottomY = 0,
 }: LEDVolumeProps) {
   const { startRad, endRad } = useMemo(
     () => getArcAngleRange(config.arcDegrees, config.openingDirection),
@@ -100,8 +111,8 @@ export function LEDVolume({
   );
 
   const geometry = useMemo(
-    () => buildMainLEDSurfaceGeometry(config.radius, config.height, startRad, endRad),
-    [config.radius, config.height, startRad, endRad]
+    () => buildMainLEDSurfaceGeometry(config.radius, config.height, startRad, endRad, bottomY),
+    [config.radius, config.height, startRad, endRad, bottomY]
   );
 
   return (

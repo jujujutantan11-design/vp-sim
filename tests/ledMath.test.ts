@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateArcLength, calculateResolutionFromPitch, buildStageDiagnostics } from "@/utils/ledMath";
+import { calculateArcLength, calculateResolutionFromPitch, buildStageDiagnostics, calculateMainLEDBottomY } from "@/utils/ledMath";
 import { TOEI_NO11_STAGE } from "@/config/stages/toeiNo11";
 
 describe("calculateArcLength", () => {
@@ -23,6 +23,21 @@ describe("calculateResolutionFromPitch", () => {
     // 1m / 1mm pitch => 1000 pixels
     const res = calculateResolutionFromPitch(1, 1, 1);
     expect(res).toEqual({ width: 1000, height: 1000 });
+  });
+});
+
+describe("calculateMainLEDBottomY", () => {
+  it("computes support-member height minus platform height (may be negative)", () => {
+    const y = calculateMainLEDBottomY({ supportMemberHeightM: 0.06 }, { height: 0.17 });
+    expect(y).toBeCloseTo(0.06 - 0.17, 10);
+    expect(y).toBeCloseTo(-0.11, 10);
+  });
+
+  it("TOEI No.11 preset: LED top sits 5.06m above the facility floor", () => {
+    const bottomY = calculateMainLEDBottomY(TOEI_NO11_STAGE.mainLED, TOEI_NO11_STAGE.platform);
+    const topY = bottomY + TOEI_NO11_STAGE.mainLED.height;
+    const topAboveFloor = topY + TOEI_NO11_STAGE.platform.height;
+    expect(topAboveFloor).toBeCloseTo(5.06, 10);
   });
 });
 

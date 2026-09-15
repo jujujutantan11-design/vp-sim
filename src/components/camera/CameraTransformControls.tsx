@@ -52,14 +52,24 @@ export function CameraTransformControls({ mode }: CameraTransformControlsProps) 
     setRoll((euler.z * 180) / Math.PI);
   }
 
+  // IMPORTANT: drei's <TransformControls> wraps its `children` in its
+  // OWN internal group and attaches the gizmo to THAT wrapper -- not to
+  // whatever ref you put on the child. Nesting `proxyRef` as a child
+  // (the earlier, buggy version of this component) meant dragging moved
+  // drei's internal wrapper while `proxyRef`'s own local transform never
+  // changed, so onObjectChange kept reading stale values. Passing the
+  // ref via the `object` prop and rendering the proxy as a SIBLING
+  // attaches the gizmo directly to our own object instead.
   return (
-    <TransformControls
-      mode={mode}
-      onObjectChange={handleObjectChange}
-      onMouseDown={() => setTransformDragging(true)}
-      onMouseUp={() => setTransformDragging(false)}
-    >
+    <>
       <group ref={proxyRef} />
-    </TransformControls>
+      <TransformControls
+        object={proxyRef}
+        mode={mode}
+        onObjectChange={handleObjectChange}
+        onMouseDown={() => setTransformDragging(true)}
+        onMouseUp={() => setTransformDragging(false)}
+      />
+    </>
   );
 }

@@ -1,5 +1,21 @@
 import { degToRad } from "./coordinates";
-import type { StageConfig, StageDiagnostics } from "@/types/stage";
+import type { StageConfig, StageDiagnostics, MainLEDConfig, PlatformConfig } from "@/types/stage";
+
+/**
+ * Main LED panel's bottom-edge Y coordinate, relative to the platform
+ * surface (Y=0). Per user-supplied plan-drawing measurements, the panel
+ * rests on a 0.06 m support member measured from the FACILITY FLOOR
+ * (Y = -platform.height), which is shorter than the platform itself
+ * (0.17 m) -- so the panel's physical bottom sits BELOW the platform
+ * surface. Do not assume the LED bottom is at Y=0 elsewhere.
+ */
+export function calculateMainLEDBottomY(
+  mainLED: Pick<MainLEDConfig, "supportMemberHeightM">,
+  platform: Pick<PlatformConfig, "height">
+): number {
+  return mainLED.supportMemberHeightM - platform.height;
+}
+
 
 /**
  * calculatedArcLength = radius * radians(arcDegrees)

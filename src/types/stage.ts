@@ -40,8 +40,27 @@ export interface MainLEDConfig {
   /** Geometric radius actually used for rendering & math, in meters. */
   radius: number;
 
-  /** Wall height, meters. Published: 5.0 m. */
+  /** Wall height, meters. Published: 5.0 m. This is the LED PANEL's own
+   *  physical height -- it does NOT by itself tell you where the panel
+   *  sits relative to the platform/floor. See `supportMemberHeightM`. */
   height: number;
+
+  /**
+   * Height, in meters, of the structural support member that the Main
+   * LED wall's bottom edge rests on, measured from the FACILITY FLOOR
+   * (not the platform surface). Per user-supplied plan-drawing
+   * measurements: 0.06 m.
+   *
+   * This means the LED panel's bottom edge does NOT sit at the
+   * platform surface (Y=0) -- it sits at
+   *   Y = supportMemberHeightM - platform.height
+   * which is BELOW the platform surface (platform.height = 0.17 m >
+   * 0.06 m), since the platform decking overlaps/covers part of the
+   * panel's lower support structure. Use
+   * `calculateMainLEDBottomY()` in src/utils/ledMath.ts rather than
+   * assuming Y=0 anywhere else in the codebase.
+   */
+  supportMemberHeightM: number;
 
   /** Arc angle of the wall, degrees. Published: 270. */
   arcDegrees: number;
@@ -89,7 +108,18 @@ export interface CeilingLEDConfig {
   /** meters */
   depth: number;
 
-  /** Height above platform (Y=0), meters. Editable. Published max ~5.1 m above platform. */
+  /**
+   * Height above platform (Y=0), meters. Editable.
+   *
+   * Initial value derived from a user-supplied measurement of 5.23 m
+   * from the FACILITY FLOOR to the ceiling LED (2026 plan-drawing
+   * review), converted to "above platform" via:
+   *   5.23 - platform.height(0.17) = 5.06 m
+   * This is distinct from `publishedMaxHeightAbovePlatform` (~5.1 m),
+   * which is the facility's documented MAXIMUM adjustable height, not
+   * necessarily the currently-configured height -- both are preserved,
+   * not reconciled, per the app's general diagnostics policy.
+   */
   height: number;
 
   /** Center offset from stage origin, meters. */

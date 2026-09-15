@@ -6,6 +6,7 @@ import { useSimulatedCamera } from "@/components/camera/useSimulatedCamera";
 import { LEDVolume } from "@/components/stage/LEDVolume";
 import { CeilingLED } from "@/components/stage/CeilingLED";
 import { Platform } from "@/components/stage/Platform";
+import { calculateMainLEDBottomY } from "@/utils/ledMath";
 
 /**
  * Forces the R3F canvas to render through our externally-managed
@@ -49,7 +50,7 @@ export function CameraView() {
           <ambientLight intensity={0.6} />
           <directionalLight position={[10, 15, 5]} intensity={0.8} />
           <Platform config={stage.platform} mainLED={stage.mainLED} />
-          <LEDVolume config={stage.mainLED} />
+          <LEDVolume config={stage.mainLED} bottomY={calculateMainLEDBottomY(stage.mainLED, stage.platform)} />
           <CeilingLED config={stage.ceilingLED} />
         </Canvas>
 

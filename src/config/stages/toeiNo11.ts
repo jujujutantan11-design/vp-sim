@@ -25,6 +25,7 @@ export const TOEI_NO11_STAGE: StageConfig = {
     geometryMode: "DRAWING_DIAMETER",
     radius: 12.636 / 2, // 6.318 m -- derived from drawingReferenceDiameter
     height: 5.0,
+    supportMemberHeightM: 0.06, // from facility floor; see MainLEDConfig doc
     arcDegrees: 270,
     openingDirection: "+Z",
 
@@ -48,7 +49,7 @@ export const TOEI_NO11_STAGE: StageConfig = {
     enabled: true,
     width: 12,
     depth: 11,
-    height: 5.1, // above platform (Y=0), initial value per spec §51
+    height: 5.06, // above platform; derived from 5.23m floor-to-ceiling-LED measurement, see CeilingLEDConfig doc
     centerX: 0,
     centerZ: 0,
 

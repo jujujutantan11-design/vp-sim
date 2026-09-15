@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import * as THREE from "three";
 import type { CeilingLEDConfig } from "@/types/stage";
+import { buildSteppedCeilingShape } from "@/utils/ceilingShape";
 
 interface CeilingLEDProps {
   config: CeilingLEDConfig;
@@ -7,19 +9,30 @@ interface CeilingLEDProps {
 }
 
 /**
- * Rectangular ceiling LED. Faces downward (toward -Y), positioned at
- * config.height above the platform (Y=0), offset by centerX/centerZ.
+ * Ceiling LED. Faces downward (toward -Y), positioned at config.height
+ * above the platform (Y=0), offset by centerX/centerZ.
+ *
+ * Footprint is a stepped/staircase-cornered shape (see
+ * src/utils/ceilingShape.ts), matching the as-built plan drawing rather
+ * than a plain rectangle -- the corner steps are a documented visual
+ * approximation, not verified exact module dimensions; the 12m x 11m
+ * bounding box remains the authoritative published size.
  */
 export function CeilingLED({ config, displayMode = "solid" }: CeilingLEDProps) {
+  const geometry = useMemo(() => {
+    const shape = buildSteppedCeilingShape(config.width, config.depth);
+    return new THREE.ShapeGeometry(shape);
+  }, [config.width, config.depth]);
+
   if (!config.enabled) return null;
 
   return (
     <mesh
       name="CeilingLED"
+      geometry={geometry}
       position={[config.centerX, config.height, config.centerZ]}
       rotation={[Math.PI / 2, 0, 0]} // rotate plane to face downward (-Y)
     >
-      <planeGeometry args={[config.width, config.depth]} />
       <meshStandardMaterial
         color="#4a3f1e"
         side={THREE.DoubleSide}

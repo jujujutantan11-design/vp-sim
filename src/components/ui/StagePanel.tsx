@@ -39,7 +39,8 @@ export function StagePanel() {
       <Section title={t("mainLED")}>
         <Row label={t("radius")} value={`${mainLED.radius.toFixed(3)} m`} />
         <Row label={t("diameter")} value={`${(mainLED.radius * 2).toFixed(3)} m`} />
-        <Row label={t("height")} value={`${mainLED.height.toFixed(1)} m`} />
+        <Row label={t("height")} value={`${mainLED.height.toFixed(2)} m`} />
+        <Row label="Support member" value={`${mainLED.supportMemberHeightM.toFixed(2)} m (from floor)`} />
         <Row label={t("arc")} value={`${mainLED.arcDegrees}°`} />
         <Row label={t("openingDirection")} value={mainLED.openingDirection} />
         <Row label="Panel" value={mainLED.panelProduct} />

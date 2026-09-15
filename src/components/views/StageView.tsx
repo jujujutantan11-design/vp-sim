@@ -10,6 +10,7 @@ import { CameraModel } from "@/components/camera/CameraModel";
 import { CameraFrustum } from "@/components/camera/CameraFrustum";
 import { CameraTransformControls } from "@/components/camera/CameraTransformControls";
 import { CameraView } from "@/components/views/CameraView";
+import { calculateMainLEDBottomY } from "@/utils/ledMath";
 import type { ViewMode } from "@/store/simulatorStore";
 
 /**
@@ -61,7 +62,7 @@ export function StageView() {
       <gridHelper args={[60, 60, "#2a2f38", "#1a1e24"]} position={[0, -stage.platform.height, 0]} />
 
       <Platform config={stage.platform} mainLED={stage.mainLED} />
-      <LEDVolume config={stage.mainLED} />
+      <LEDVolume config={stage.mainLED} bottomY={calculateMainLEDBottomY(stage.mainLED, stage.platform)} />
       <CeilingLED config={stage.ceilingLED} />
       {showAxes && <StageAxes openingDirection={stage.mainLED.openingDirection} />}
 
