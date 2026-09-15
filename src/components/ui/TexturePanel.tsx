@@ -1,16 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useTextureStore } from "@/store/textureStore";
 import type { FitMode } from "@/store/textureStore";
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
+import { downscaleImageFile } from "@/utils/downscaleImage";
 
 function FitModeSelect({ value, onChange }: { value: FitMode; onChange: (m: FitMode) => void }) {
   return (
@@ -39,16 +31,29 @@ export function TexturePanel() {
 
   const mainInputRef = useRef<HTMLInputElement>(null);
   const ceilingInputRef = useRef<HTMLInputElement>(null);
+  const [isProcessing, setIsProcessing] = useState<"main" | "ceiling" | null>(null);
 
   async function handleMainFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setMainLEDImage(await readFileAsDataUrl(file));
+    setIsProcessing("main");
+    try {
+      setMainLEDImage(await downscaleImageFile(file));
+    } finally {
+      setIsProcessing(null);
+      e.target.value = "";
+    }
   }
   async function handleCeilingFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setCeilingLEDImage(await readFileAsDataUrl(file));
+    setIsProcessing("ceiling");
+    try {
+      setCeilingLEDImage(await downscaleImageFile(file));
+    } finally {
+      setIsProcessing(null);
+      e.target.value = "";
+    }
   }
 
   return (
@@ -77,6 +82,7 @@ export function TexturePanel() {
             画像を削除
           </button>
         )}
+        {isProcessing === "main" && <div className="text-[10px] text-vp-accent">画像を処理中...</div>}
       </div>
 
       <div>
@@ -99,6 +105,7 @@ export function TexturePanel() {
             画像を削除
           </button>
         )}
+        {isProcessing === "ceiling" && <div className="text-[10px] text-vp-accent">画像を処理中...</div>}
       </div>
     </div>
   );

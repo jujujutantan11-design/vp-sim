@@ -12,15 +12,40 @@ export type LEDDisplayMode = "wireframe" | "solid" | "textured";
 interface LEDVolumeProps {
   config: MainLEDConfig;
   displayMode?: LEDDisplayMode;
+  /**
+   * Y coordinate (relative to platform surface, Y=0) of the panel's
+   * physical bottom edge. Defaults to 0 for backward compatibility, but
+   * callers should pass `calculateMainLEDBottomY(stage.mainLED,
+   * stage.platform)` from src/utils/ledMath.ts so the panel is
+   * positioned per the actual support-member measurement rather than
+   * assumed to start exactly at the platform surface.
+   */
   bottomY?: number;
+  /** Content image (data URL) to map onto the wall's U/V (spec §28). */
   imageUrl?: string | null;
   fitMode?: FitMode;
+  /** Purely decorative visualization thickness in meters. NOT used for any coverage math. */
   visualThicknessM?: number;
 }
 
-const ANGULAR_SEGMENTS = 256;
-const VERTICAL_SEGMENTS = 1;
+const ANGULAR_SEGMENTS = 256; // spec §6: angularSegments >= 256
+const VERTICAL_SEGMENTS = 1; // spec §6: verticalSegments >= 1
 
+/**
+ * Deliberately constructed cylindrical LED surface.
+ *
+ * Parameterization (must match src/utils/coordinates.ts exactly, since
+ * the coverage engine in Phase 3 uses the same convention):
+ *   x = R * sin(theta)
+ *   z = R * cos(theta)
+ *   y = vertical position
+ *
+ * The surface faces INWARD (toward the stage center / -radial direction).
+ * We do NOT use THREE.CylinderGeometry's built-in theta handling, to
+ * avoid relying on its undocumented orientation and to guarantee this
+ * parameterization is exactly what the ray-intersection math (Phase 3)
+ * assumes.
+ */
 function buildMainLEDSurfaceGeometry(
   radius: number,
   height: number,
@@ -30,6 +55,7 @@ function buildMainLEDSurfaceGeometry(
 ): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
 
+  // endRad may be > startRad + 2*PI-ish wrap; compute angular span directly.
   let angularSpan = endRad - startRad;
   if (angularSpan <= 0) angularSpan += Math.PI * 2;
 
@@ -51,10 +77,13 @@ function buildMainLEDSurfaceGeometry(
 
       positions.push(x, y, z);
 
+      // Inward-facing normal: points from the wall surface toward the
+      // cylinder axis, i.e. the negative of the outward radial direction.
       const nx = -Math.sin(theta);
       const nz = -Math.cos(theta);
       normals.push(nx, 0, nz);
 
+      // U = position along the wall (0..1), V = vertical position (0..1)
       uvs.push(u, v);
     }
   }
@@ -94,6 +123,13 @@ export function LEDVolume({
     () => buildMainLEDSurfaceGeometry(config.radius, config.height, startRad, endRad, bottomY),
     [config.radius, config.height, startRad, endRad, bottomY]
   );
+
+  // Dispose the previous geometry's GPU buffers whenever a new one
+  // replaces it (or on unmount) -- see useImageTexture.ts for why this
+  // matters over an extended session.
+  useEffect(() => {
+    return () => geometry.dispose();
+  }, [geometry]);
 
   const texture = useImageTexture(imageUrl);
 

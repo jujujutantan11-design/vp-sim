@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { SafeAreaResult } from "@/types/simulator";
 
@@ -54,6 +54,12 @@ export function SafeAreaOverlay({ result }: SafeAreaOverlayProps) {
     geo.setIndex(indices);
     return geo;
   }, [result]);
+
+  // Dispose the previous grid geometry's GPU buffers whenever a new
+  // calculation replaces it (or on unmount).
+  useEffect(() => {
+    return () => geometry?.dispose();
+  }, [geometry]);
 
   if (!geometry) return null;
 

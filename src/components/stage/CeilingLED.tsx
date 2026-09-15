@@ -32,6 +32,12 @@ export function CeilingLED({ config, displayMode = "solid", imageUrl = null, fit
     return new THREE.ShapeGeometry(shape);
   }, [config.width, config.depth]);
 
+  // Dispose the previous geometry's GPU buffers whenever a new one
+  // replaces it (or on unmount).
+  useEffect(() => {
+    return () => geometry.dispose();
+  }, [geometry]);
+
   const texture = useImageTexture(imageUrl);
 
   useEffect(() => {

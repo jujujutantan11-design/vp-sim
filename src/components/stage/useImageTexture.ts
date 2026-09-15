@@ -1,16 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
-/**
- * Uploaded LED content images can come straight from a phone/tablet
- * camera at very high resolution (e.g. 11648x8736, ~100 megapixels).
- * That comfortably exceeds typical WebGL MAX_TEXTURE_SIZE limits
- * (commonly 4096-8192 depending on GPU/browser), which causes the
- * texture upload to silently fail -- no JS-catchable error, the
- * surface just renders as a blank/solid color. All uploaded images are
- * therefore downscaled (preserving aspect ratio) to at most this many
- * pixels on the longest side before becoming a THREE texture.
- */
 const MAX_TEXTURE_DIMENSION = 2048;
 
 /**
@@ -19,12 +9,23 @@ const MAX_TEXTURE_DIMENSION = 2048;
  * THREE.CanvasTexture. Re-loads whenever the URL changes. Returns null
  * while loading / when no URL is given -- callers fall back to their
  * solid color until ready.
+ *
+ * Disposes the PREVIOUS texture whenever a new one replaces it (or on
+ * unmount) -- GPU-side texture memory is not reclaimed by JS garbage
+ * collection alone, and leaving old textures undisposed across many
+ * uploads/re-renders is a real way to exhaust GPU memory and crash the
+ * WebGL context ("Context Lost") even for later, small allocations.
  */
 export function useImageTexture(url: string | null): THREE.Texture | null {
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const currentTextureRef = useRef<THREE.Texture | null>(null);
 
   useEffect(() => {
     if (!url) {
+      if (currentTextureRef.current) {
+        currentTextureRef.current.dispose();
+        currentTextureRef.current = null;
+      }
       setTexture(null);
       return;
     }
@@ -49,15 +50,18 @@ export function useImageTexture(url: string | null): THREE.Texture | null {
       }
       ctx.drawImage(img, 0, 0, targetW, targetH);
 
-      console.log(
-        `[useImageTexture] loaded ${width}x${height}, downscaled to ${targetW}x${targetH} for WebGL safety`
-      );
+      // Dispose the texture this one is replacing, if any.
+      if (currentTextureRef.current) {
+        currentTextureRef.current.dispose();
+      }
 
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.wrapS = THREE.ClampToEdgeWrapping;
       tex.wrapT = THREE.ClampToEdgeWrapping;
       tex.needsUpdate = true;
+
+      currentTextureRef.current = tex;
       setTexture(tex);
     };
     img.onerror = (err) => {
@@ -69,6 +73,16 @@ export function useImageTexture(url: string | null): THREE.Texture | null {
       cancelled = true;
     };
   }, [url]);
+
+  // Dispose on unmount.
+  useEffect(() => {
+    return () => {
+      if (currentTextureRef.current) {
+        currentTextureRef.current.dispose();
+        currentTextureRef.current = null;
+      }
+    };
+  }, []);
 
   return texture;
 }
