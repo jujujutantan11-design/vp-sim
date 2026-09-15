@@ -1,8 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import type { ChangeEvent } from "react";
 import { useTextureStore } from "@/store/textureStore";
 import type { FitMode } from "@/store/textureStore";
-import { TEST_PATTERN_URL } from "@/components/stage/useImageTexture";
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
 
 function FitModeSelect({ value, onChange }: { value: FitMode; onChange: (m: FitMode) => void }) {
   return (
@@ -32,39 +40,15 @@ export function TexturePanel() {
   const mainInputRef = useRef<HTMLInputElement>(null);
   const ceilingInputRef = useRef<HTMLInputElement>(null);
 
-  // Revoke blob: object URLs when they're replaced/removed, to avoid
-  // leaking browser-managed memory across many uploads in one session.
-  const prevMainUrl = useRef<string | null>(null);
-  const prevCeilingUrl = useRef<string | null>(null);
-  useEffect(() => {
-    if (prevMainUrl.current && prevMainUrl.current !== mainLEDImageDataUrl) {
-      URL.revokeObjectURL(prevMainUrl.current);
-    }
-    prevMainUrl.current = mainLEDImageDataUrl;
-  }, [mainLEDImageDataUrl]);
-  useEffect(() => {
-    if (prevCeilingUrl.current && prevCeilingUrl.current !== ceilingLEDImageDataUrl) {
-      URL.revokeObjectURL(prevCeilingUrl.current);
-    }
-    prevCeilingUrl.current = ceilingLEDImageDataUrl;
-  }, [ceilingLEDImageDataUrl]);
-
-  // NOTE: no canvas / toDataURL here -- just a plain object URL
-  // reference to the selected File. Actual resizing to a WebGL-safe
-  // size happens in useImageTexture via createImageBitmap, which does
-  // not go through a 2D canvas (see that file for why that matters).
-  function handleMainFile(e: ChangeEvent<HTMLInputElement>) {
+  async function handleMainFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    console.log("[TexturePanel] main file selected:", file ? `${file.name} (${file.size} bytes)` : "none");
     if (!file) return;
-    setMainLEDImage(URL.createObjectURL(file));
-    e.target.value = "";
+    setMainLEDImage(await readFileAsDataUrl(file));
   }
-  function handleCeilingFile(e: ChangeEvent<HTMLInputElement>) {
+  async function handleCeilingFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setCeilingLEDImage(URL.createObjectURL(file));
-    e.target.value = "";
+    setCeilingLEDImage(await readFileAsDataUrl(file));
   }
 
   return (
@@ -85,13 +69,6 @@ export function TexturePanel() {
           onChange={handleMainFile}
           className="mb-1 w-full text-[10px] text-neutral-400 file:mr-2 file:rounded file:border-0 file:bg-vp-border file:px-2 file:py-1 file:text-neutral-200"
         />
-        <button
-          onClick={() => setMainLEDImage(TEST_PATTERN_URL)}
-          className="mb-1 rounded border border-vp-accent px-2 py-0.5 text-[10px] text-vp-accent"
-        >
-          🔴🔵 テストパターンを表示(診断用)
-        </button>
-        <br />
         {mainLEDImageDataUrl && (
           <button
             onClick={() => setMainLEDImage(null)}

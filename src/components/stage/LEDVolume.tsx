@@ -124,23 +124,7 @@ export function LEDVolume({
     [config.radius, config.height, startRad, endRad, bottomY]
   );
 
-  // Dispose the previous geometry's GPU buffers whenever a new one
-  // replaces it (or on unmount) -- see useImageTexture.ts for why this
-  // matters over an extended session.
-  useEffect(() => {
-    return () => geometry.dispose();
-  }, [geometry]);
-
   const texture = useImageTexture(imageUrl);
-
-  useEffect(() => {
-    console.log(
-      "[LEDVolume] render. imageUrl:",
-      imageUrl ? `present (${imageUrl.length} chars)` : "null",
-      "texture:",
-      texture ? "loaded" : "null"
-    );
-  }, [imageUrl, texture]);
 
   useEffect(() => {
     if (!texture) return;
@@ -152,21 +136,15 @@ export function LEDVolume({
     texture.needsUpdate = true;
   }, [texture, fitMode, config.radius, config.arcDegrees, config.height]);
 
-  // DEBUG COLOR CODING (temporary, remove once resolved):
-  //   dark blue  = no imageUrl at all (normal, no upload)
-  //   ORANGE     = imageUrl is set but texture hasn't finished loading yet
-  //   the image  = texture loaded successfully
-  const debugState: "none" | "loading" | "loaded" = !imageUrl ? "none" : texture ? "loaded" : "loading";
-
   return (
     <mesh geometry={geometry} name="MainLEDVolume">
       <meshStandardMaterial
-        color={texture ? "#000000" : debugState === "loading" ? "#ff8800" : displayMode === "wireframe" ? "#3b82f6" : "#1e3a5f"}
+        color={texture ? "#000000" : displayMode === "wireframe" ? "#3b82f6" : "#1e3a5f"}
         side={THREE.DoubleSide}
         wireframe={displayMode === "wireframe"}
-        emissive={texture ? "#ffffff" : debugState === "loading" ? "#ff8800" : displayMode === "solid" ? "#0f2744" : "#000000"}
+        emissive={texture ? "#ffffff" : displayMode === "solid" ? "#0f2744" : "#000000"}
         emissiveMap={texture ?? undefined}
-        emissiveIntensity={texture ? 1 : debugState === "loading" ? 0.8 : 0.4}
+        emissiveIntensity={texture ? 1 : 0.4}
         roughness={0.6}
         metalness={0.1}
       />

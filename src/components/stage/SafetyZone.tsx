@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import * as THREE from "three";
 import type { MainLEDConfig, SafetyZoneConfig } from "@/types/stage";
 import { getArcAngleRange } from "@/utils/coordinates";
@@ -77,10 +77,6 @@ export function SafetyZone({ mainLED, safetyZone, show }: SafetyZoneProps) {
     geo.computeVertexNormals();
     return geo;
   }, [mainLED.arcDegrees, mainLED.openingDirection, boundaryRadius]);
-
-  useEffect(() => {
-    return () => geometry.dispose();
-  }, [geometry]);
 
   if (!show) return null;
 
