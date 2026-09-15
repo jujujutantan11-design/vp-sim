@@ -65,12 +65,10 @@ export function StageView() {
     <Canvas
       key={viewMode} // force camera pose reset when switching view modes
       camera={{ position: pose.position, up: pose.up, fov: 50, near: 0.05, far: 200 }}
-      gl={{ preserveDrawingBuffer: true }}
-      shadows
     >
       <color attach="background" args={["#0a0c0f"]} />
       <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 15, 5]} intensity={0.8} castShadow />
+      <directionalLight position={[10, 15, 5]} intensity={0.8} />
       <gridHelper
         args={[60, 60, "#2a2f38", "#1a1e24"]}
         position={[0, -stage.platform.height - 0.05, 0]}
