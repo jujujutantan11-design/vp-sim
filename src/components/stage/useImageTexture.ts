@@ -87,6 +87,19 @@ export function useImageTexture(url: string | null): THREE.Texture | null {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.wrapS = THREE.ClampToEdgeWrapping;
         tex.wrapT = THREE.ClampToEdgeWrapping;
+        // Uploaded images are essentially never a power-of-two size.
+        // three.js's default minFilter (LinearMipmapLinearFilter)
+        // requires mipmaps; forcing mipmap generation/sampling on a
+        // non-power-of-two texture is a well-known way for some
+        // WebGL implementations to treat the texture as "incomplete"
+        // and render it as a flat fallback color (often white) even
+        // though the pixel data itself is perfectly valid. Disabling
+        // mipmaps and using a non-mipmap filter sidesteps this
+        // entirely -- we don't need mipmaps for a single large flat
+        // LED surface anyway.
+        tex.generateMipmaps = false;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
         tex.needsUpdate = true;
 
         currentRef.current = { texture: tex, bitmap };
