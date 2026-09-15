@@ -3,6 +3,45 @@
 Virtual Production camera-planning tool for the LED Volume at TOEI TOKYO
 STUDIOS, No.11 Stage.
 
+## Status: Phase 3 — Ray/LED Coverage Engine
+
+Adds the analytic ray/LED intersection engine and coverage sampling on
+top of the verified Phase 1 + Phase 2 base (including the platform/LED
+support-member correction and rendering fixes from the 2026-09-15
+review):
+
+- `src/utils/intersections.ts` — analytic ray/cylinder intersection
+  against the Main LED (quadratic solve, spec §17), ray/plane
+  intersection against the Ceiling LED (spec §18), and `castRay()` as
+  the single entry point returning the nearest MAIN_LED / CEILING_LED /
+  OUTSIDE_LED hit. Never counts intersections behind the camera, outside
+  the vertical LED range, or inside the 270° arc's opening sector.
+- `src/utils/coverage.ts` — samples the camera's image plane on a
+  configurable grid (64×36 full quality / 32×18 while dragging, per
+  spec §41), classifies each ray, computes MAIN_LED/CEILING/OUTSIDE
+  percentages, frame-edge analysis (§20), and overall SAFE/WARNING/
+  VIOLATION shooting status from centralized thresholds
+  (`src/config/thresholds.ts`, spec §21 — never hard-coded in
+  components).
+- `useCoverage` hook — the single source of truth both the ANALYSIS
+  panel and the CAMERA VIEW overlay read from.
+- `CoverageOverlay` — OFF/STATUS/HEATMAP diagnostic overlay drawn on
+  top of (not modifying) the CAMERA VIEW render, spec §19.
+- ANALYSIS panel now shows live shooting status, LED/ceiling/outside
+  percentages, and per-edge OK/WARNING badges.
+- `tests/intersections.test.ts`, `tests/coverage.test.ts` — center
+  camera, opening-direction ray, tangent/near-tangent rays, rays behind
+  the camera, vertical-range misses, ceiling hits/misses, frame-edge
+  detection, and shooting-status threshold tests.
+
+**Not yet implemented**: safety zone visualization, Safe Shooting Area,
+movement margin, minimum-safe-focal-length solver (Phase 4); texture
+upload, floor-plan overlay, save/load (Phase 5).
+
+---
+
+_Prior phase notes below, kept for history._
+
 ## Status: Phase 2 — Cinema Camera
 
 Phase 1 (geometry foundation) was verified working by the user on-device

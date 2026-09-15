@@ -4,6 +4,7 @@ import { STAGE_PRESETS, DEFAULT_STAGE_PRESET_ID } from "@/config/stages";
 
 export type ViewMode = "PERSPECTIVE" | "TOP" | "FRONT" | "SIDE" | "CAMERA";
 export type TransformMode = "translate" | "rotate";
+export type CoverageOverlayMode = "OFF" | "STATUS" | "HEATMAP";
 
 /**
  * Phase 1 store slice: stage configuration + view mode only.
@@ -20,6 +21,7 @@ interface SimulatorState {
   showAxes: boolean;
   isTransformDragging: boolean;
   transformMode: TransformMode;
+  coverageOverlayMode: CoverageOverlayMode;
 
   setStagePreset: (id: string) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -28,6 +30,7 @@ interface SimulatorState {
   setCeilingHeight: (heightM: number) => void;
   setTransformDragging: (dragging: boolean) => void;
   setTransformMode: (mode: TransformMode) => void;
+  setCoverageOverlayMode: (mode: CoverageOverlayMode) => void;
 }
 
 export const useSimulatorStore = create<SimulatorState>((set, get) => ({
@@ -38,6 +41,7 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
   showAxes: true,
   isTransformDragging: false,
   transformMode: "translate",
+  coverageOverlayMode: "STATUS",
 
   setStagePreset: (id) => {
     const preset = STAGE_PRESETS[id];
@@ -73,4 +77,5 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
 
   setTransformDragging: (dragging) => set({ isTransformDragging: dragging }),
   setTransformMode: (mode) => set({ transformMode: mode }),
+  setCoverageOverlayMode: (mode) => set({ coverageOverlayMode: mode }),
 }));
