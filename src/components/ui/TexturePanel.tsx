@@ -1,8 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { ChangeEvent } from "react";
 import { useTextureStore } from "@/store/textureStore";
 import type { FitMode } from "@/store/textureStore";
-import { downscaleImageFile } from "@/utils/downscaleImage";
 
 function FitModeSelect({ value, onChange }: { value: FitMode; onChange: (m: FitMode) => void }) {
   return (
@@ -31,36 +30,40 @@ export function TexturePanel() {
 
   const mainInputRef = useRef<HTMLInputElement>(null);
   const ceilingInputRef = useRef<HTMLInputElement>(null);
-  const [isProcessing, setIsProcessing] = useState<"main" | "ceiling" | null>(null);
 
-  async function handleMainFile(e: ChangeEvent<HTMLInputElement>) {
-    console.log("[TexturePanel] handleMainFile fired");
-    const file = e.target.files?.[0];
-    console.log("[TexturePanel] file:", file ? `${file.name} (${file.size} bytes, ${file.type})` : "none");
-    if (!file) return;
-    setIsProcessing("main");
-    try {
-      const dataUrl = await downscaleImageFile(file);
-      console.log("[TexturePanel] downscale complete, dataUrl length:", dataUrl.length);
-      setMainLEDImage(dataUrl);
-      console.log("[TexturePanel] setMainLEDImage called");
-    } catch (err) {
-      console.error("[TexturePanel] downscaleImageFile FAILED:", err);
-    } finally {
-      setIsProcessing(null);
-      e.target.value = "";
+  // Revoke blob: object URLs when they're replaced/removed, to avoid
+  // leaking browser-managed memory across many uploads in one session.
+  const prevMainUrl = useRef<string | null>(null);
+  const prevCeilingUrl = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevMainUrl.current && prevMainUrl.current !== mainLEDImageDataUrl) {
+      URL.revokeObjectURL(prevMainUrl.current);
     }
+    prevMainUrl.current = mainLEDImageDataUrl;
+  }, [mainLEDImageDataUrl]);
+  useEffect(() => {
+    if (prevCeilingUrl.current && prevCeilingUrl.current !== ceilingLEDImageDataUrl) {
+      URL.revokeObjectURL(prevCeilingUrl.current);
+    }
+    prevCeilingUrl.current = ceilingLEDImageDataUrl;
+  }, [ceilingLEDImageDataUrl]);
+
+  // NOTE: no canvas / toDataURL here -- just a plain object URL
+  // reference to the selected File. Actual resizing to a WebGL-safe
+  // size happens in useImageTexture via createImageBitmap, which does
+  // not go through a 2D canvas (see that file for why that matters).
+  function handleMainFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    console.log("[TexturePanel] main file selected:", file ? `${file.name} (${file.size} bytes)` : "none");
+    if (!file) return;
+    setMainLEDImage(URL.createObjectURL(file));
+    e.target.value = "";
   }
-  async function handleCeilingFile(e: ChangeEvent<HTMLInputElement>) {
+  function handleCeilingFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsProcessing("ceiling");
-    try {
-      setCeilingLEDImage(await downscaleImageFile(file));
-    } finally {
-      setIsProcessing(null);
-      e.target.value = "";
-    }
+    setCeilingLEDImage(URL.createObjectURL(file));
+    e.target.value = "";
   }
 
   return (
@@ -89,7 +92,6 @@ export function TexturePanel() {
             画像を削除
           </button>
         )}
-        {isProcessing === "main" && <div className="text-[10px] text-vp-accent">画像を処理中...</div>}
       </div>
 
       <div>
@@ -112,7 +114,6 @@ export function TexturePanel() {
             画像を削除
           </button>
         )}
-        {isProcessing === "ceiling" && <div className="text-[10px] text-vp-accent">画像を処理中...</div>}
       </div>
     </div>
   );
