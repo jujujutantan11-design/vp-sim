@@ -3,6 +3,44 @@
 Virtual Production camera-planning tool for the LED Volume at TOEI TOKYO
 STUDIOS, No.11 Stage.
 
+## Status: Phase 5 — Production Features
+
+Adds content/texture mapping and project persistence on top of the
+verified Phase 1-4 base:
+
+- **LED content upload** (spec §28): `src/store/textureStore.ts`,
+  `src/utils/textureFit.ts` (Fit/Fill/Stretch UV transform math, with
+  FIT approximated via clamped-edge padding rather than true black
+  letterbox bars -- documented in code), `useImageTexture` hook. Wired
+  into both `LEDVolume` and `CeilingLED` (separate images per surface,
+  per spec), using `emissiveMap` so uploaded content reads as
+  self-lit LED output rather than a flat-lit texture. Video is
+  intentionally NOT implemented (spec §28 explicitly defers it).
+- **Project save/load** (spec §47): `src/utils/projectFile.ts` builds
+  and restores a JSON snapshot (stage preset + overrides, camera, lens,
+  view state, Safe Area settings) via the `ProjectPanel` UI. Embedded
+  LED images are deliberately excluded from the file to keep project
+  JSON small/portable.
+- **Screenshot**: `ScreenshotCapture` (must live inside the R3F
+  `<Canvas>` to access the WebGL context) downloads the current Stage
+  View frame as PNG; the Canvas is created with
+  `preserveDrawingBuffer: true` so the capture is reliable. Camera View
+  capture is not yet wired (button is disabled there with an
+  explanation).
+- `tests/textureFit.test.ts` — Fit/Fill/Stretch transform math,
+  including the FIT/FILL mathematical-inverse relationship.
+- `tests/projectFile.test.ts` — export/import round-trip for camera
+  position/orientation, lens, view mode, and coverage overlay mode.
+
+**Not yet implemented**: floor-plan overlay + two-point calibration
+(spec §33 -- architecture left for a later pass), video LED content,
+minimum-safe-focal-length solver, automatic recommended correction,
+screenshot from Camera View.
+
+---
+
+_Prior phase notes below, kept for history._
+
 ## Status: Phase 4 — Safety Zone + Safe Shooting Area
 
 Adds the 1m safety-zone visualization and the Safe Shooting Area engine

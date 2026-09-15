@@ -2,8 +2,10 @@ import { TopBar } from "@/components/ui/TopBar";
 import { StagePanel } from "@/components/ui/StagePanel";
 import { CameraPanel } from "@/components/ui/CameraPanel";
 import { LensPanel } from "@/components/ui/LensPanel";
+import { TexturePanel } from "@/components/ui/TexturePanel";
 import { AnalysisPanel } from "@/components/ui/AnalysisPanel";
 import { SafeAreaPanel } from "@/components/ui/SafeAreaPanel";
+import { ProjectPanel } from "@/components/ui/ProjectPanel";
 import { DiagnosticsPanel } from "@/components/ui/DiagnosticsPanel";
 import { StageView } from "@/components/views/StageView";
 
@@ -16,6 +18,7 @@ export default function App() {
           <StagePanel />
           <CameraPanel />
           <LensPanel />
+          <TexturePanel />
         </div>
         <div className="relative min-w-0 flex-1">
           <StageView />
@@ -23,6 +26,7 @@ export default function App() {
         <div className="flex w-72 shrink-0 flex-col overflow-y-auto border-l border-vp-border bg-vp-panel">
           <AnalysisPanel />
           <SafeAreaPanel />
+          <ProjectPanel />
           <DiagnosticsPanel />
         </div>
       </div>

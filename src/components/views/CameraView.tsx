@@ -8,6 +8,7 @@ import { LEDVolume } from "@/components/stage/LEDVolume";
 import { CeilingLED } from "@/components/stage/CeilingLED";
 import { Platform } from "@/components/stage/Platform";
 import { CoverageOverlay } from "@/components/views/CoverageOverlay";
+import { useTextureStore } from "@/store/textureStore";
 import { calculateMainLEDBottomY } from "@/utils/ledMath";
 
 /**
@@ -48,6 +49,10 @@ export function CameraView() {
   const setCoverageOverlayMode = useSimulatorStore((s) => s.setCoverageOverlayMode);
   const { camera, fov, sensorAspect, cameraName, sensorModeName } = useSimulatedCamera();
   const coverage = useCoverage();
+  const mainLEDImageDataUrl = useTextureStore((s) => s.mainLEDImageDataUrl);
+  const mainLEDFitMode = useTextureStore((s) => s.mainLEDFitMode);
+  const ceilingLEDImageDataUrl = useTextureStore((s) => s.ceilingLEDImageDataUrl);
+  const ceilingLEDFitMode = useTextureStore((s) => s.ceilingLEDFitMode);
 
   return (
     <div className="relative flex h-full w-full items-center justify-center bg-black">
@@ -61,8 +66,13 @@ export function CameraView() {
           <ambientLight intensity={0.6} />
           <directionalLight position={[10, 15, 5]} intensity={0.8} />
           <Platform config={stage.platform} mainLED={stage.mainLED} />
-          <LEDVolume config={stage.mainLED} bottomY={calculateMainLEDBottomY(stage.mainLED, stage.platform)} />
-          <CeilingLED config={stage.ceilingLED} />
+          <LEDVolume
+            config={stage.mainLED}
+            bottomY={calculateMainLEDBottomY(stage.mainLED, stage.platform)}
+            imageUrl={mainLEDImageDataUrl}
+            fitMode={mainLEDFitMode}
+          />
+          <CeilingLED config={stage.ceilingLED} imageUrl={ceilingLEDImageDataUrl} fitMode={ceilingLEDFitMode} />
         </Canvas>
 
         <CoverageOverlay coverage={coverage} mode={coverageOverlayMode} opacity={0.55} />

@@ -1,7 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { MainLEDConfig } from "@/types/stage";
 import { getArcAngleRange } from "@/utils/coordinates";
+import { useImageTexture } from "./useImageTexture";
+import { computeFitTransform } from "@/utils/textureFit";
+import type { FitMode } from "@/store/textureStore";
+import { calculateArcLength } from "@/utils/ledMath";
 
 export type LEDDisplayMode = "wireframe" | "solid" | "textured";
 
@@ -17,6 +21,9 @@ interface LEDVolumeProps {
    * assumed to start exactly at the platform surface.
    */
   bottomY?: number;
+  /** Content image (data URL) to map onto the wall's U/V (spec §28). */
+  imageUrl?: string | null;
+  fitMode?: FitMode;
   /** Purely decorative visualization thickness in meters. NOT used for any coverage math. */
   visualThicknessM?: number;
 }
@@ -104,6 +111,8 @@ export function LEDVolume({
   config,
   displayMode = "solid",
   bottomY = 0,
+  imageUrl = null,
+  fitMode = "FILL",
 }: LEDVolumeProps) {
   const { startRad, endRad } = useMemo(
     () => getArcAngleRange(config.arcDegrees, config.openingDirection),
@@ -115,14 +124,28 @@ export function LEDVolume({
     [config.radius, config.height, startRad, endRad, bottomY]
   );
 
+  const texture = useImageTexture(imageUrl);
+
+  useEffect(() => {
+    if (!texture) return;
+    const surfaceAspect = calculateArcLength(config.radius, config.arcDegrees) / config.height;
+    const imageAspect = (texture.image?.width ?? 1) / (texture.image?.height ?? 1);
+    const t = computeFitTransform(fitMode, imageAspect, surfaceAspect);
+    texture.repeat.set(t.repeatX, t.repeatY);
+    texture.offset.set(t.offsetX, t.offsetY);
+    texture.needsUpdate = true;
+  }, [texture, fitMode, config.radius, config.arcDegrees, config.height]);
+
   return (
     <mesh geometry={geometry} name="MainLEDVolume">
       <meshStandardMaterial
-        color={displayMode === "wireframe" ? "#3b82f6" : "#1e3a5f"}
+        color={texture ? "#ffffff" : displayMode === "wireframe" ? "#3b82f6" : "#1e3a5f"}
+        map={texture ?? undefined}
         side={THREE.DoubleSide}
         wireframe={displayMode === "wireframe"}
-        emissive={displayMode === "solid" ? "#0f2744" : "#000000"}
-        emissiveIntensity={0.4}
+        emissive={texture ? "#ffffff" : displayMode === "solid" ? "#0f2744" : "#000000"}
+        emissiveMap={texture ?? undefined}
+        emissiveIntensity={texture ? 1 : 0.4}
         roughness={0.6}
         metalness={0.1}
       />

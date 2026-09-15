@@ -10,9 +10,11 @@ import { CameraModel } from "@/components/camera/CameraModel";
 import { CameraFrustum } from "@/components/camera/CameraFrustum";
 import { CameraTransformControls } from "@/components/camera/CameraTransformControls";
 import { CameraView } from "@/components/views/CameraView";
+import { ScreenshotCapture } from "@/components/views/ScreenshotCapture";
 import { SafetyZone } from "@/components/stage/SafetyZone";
 import { SafeAreaOverlay } from "@/components/views/SafeAreaOverlay";
 import { useSafeAreaStore } from "@/store/safeAreaStore";
+import { useTextureStore } from "@/store/textureStore";
 import { calculateMainLEDBottomY } from "@/utils/ledMath";
 import type { ViewMode } from "@/store/simulatorStore";
 
@@ -45,6 +47,10 @@ export function StageView() {
   const transformMode = useSimulatorStore((s) => s.transformMode);
   const safeAreaResult = useSafeAreaStore((s) => s.result);
   const showSafetyZone = useSimulatorStore((s) => s.showSafetyZone);
+  const mainLEDImageDataUrl = useTextureStore((s) => s.mainLEDImageDataUrl);
+  const mainLEDFitMode = useTextureStore((s) => s.mainLEDFitMode);
+  const ceilingLEDImageDataUrl = useTextureStore((s) => s.ceilingLEDImageDataUrl);
+  const ceilingLEDFitMode = useTextureStore((s) => s.ceilingLEDFitMode);
 
   const pose = useMemo(
     () => getEditorCameraPose(viewMode, stage.mainLED.radius),
@@ -59,6 +65,7 @@ export function StageView() {
     <Canvas
       key={viewMode} // force camera pose reset when switching view modes
       camera={{ position: pose.position, up: pose.up, fov: 50, near: 0.05, far: 200 }}
+      gl={{ preserveDrawingBuffer: true }}
       shadows
     >
       <color attach="background" args={["#0a0c0f"]} />
@@ -70,8 +77,13 @@ export function StageView() {
       />
 
       <Platform config={stage.platform} mainLED={stage.mainLED} />
-      <LEDVolume config={stage.mainLED} bottomY={calculateMainLEDBottomY(stage.mainLED, stage.platform)} />
-      <CeilingLED config={stage.ceilingLED} />
+      <LEDVolume
+        config={stage.mainLED}
+        bottomY={calculateMainLEDBottomY(stage.mainLED, stage.platform)}
+        imageUrl={mainLEDImageDataUrl}
+        fitMode={mainLEDFitMode}
+      />
+      <CeilingLED config={stage.ceilingLED} imageUrl={ceilingLEDImageDataUrl} fitMode={ceilingLEDFitMode} />
       {showAxes && <StageAxes openingDirection={stage.mainLED.openingDirection} />}
 
       <SafetyZone mainLED={stage.mainLED} safetyZone={stage.safetyZone} show={showSafetyZone} />
@@ -89,6 +101,7 @@ export function StageView() {
       <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
         <GizmoViewport />
       </GizmoHelper>
+      <ScreenshotCapture />
     </Canvas>
   );
 }

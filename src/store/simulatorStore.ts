@@ -22,6 +22,7 @@ interface SimulatorState {
   isTransformDragging: boolean;
   transformMode: TransformMode;
   coverageOverlayMode: CoverageOverlayMode;
+  screenshotRequested: boolean;
 
   setStagePreset: (id: string) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -31,6 +32,8 @@ interface SimulatorState {
   setTransformDragging: (dragging: boolean) => void;
   setTransformMode: (mode: TransformMode) => void;
   setCoverageOverlayMode: (mode: CoverageOverlayMode) => void;
+  requestScreenshot: () => void;
+  clearScreenshotRequest: () => void;
 }
 
 export const useSimulatorStore = create<SimulatorState>((set, get) => ({
@@ -42,6 +45,7 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
   isTransformDragging: false,
   transformMode: "translate",
   coverageOverlayMode: "STATUS",
+  screenshotRequested: false,
 
   setStagePreset: (id) => {
     const preset = STAGE_PRESETS[id];
@@ -78,4 +82,6 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
   setTransformDragging: (dragging) => set({ isTransformDragging: dragging }),
   setTransformMode: (mode) => set({ transformMode: mode }),
   setCoverageOverlayMode: (mode) => set({ coverageOverlayMode: mode }),
+  requestScreenshot: () => set({ screenshotRequested: true }),
+  clearScreenshotRequest: () => set({ screenshotRequested: false }),
 }));
