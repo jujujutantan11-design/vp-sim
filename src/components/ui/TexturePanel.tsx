@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { ChangeEvent } from "react";
 import { useTextureStore } from "@/store/textureStore";
 import type { FitMode } from "@/store/textureStore";
+import { TEST_PATTERN_URL } from "@/components/stage/useImageTexture";
 
 function FitModeSelect({ value, onChange }: { value: FitMode; onChange: (m: FitMode) => void }) {
   return (
@@ -84,6 +85,13 @@ export function TexturePanel() {
           onChange={handleMainFile}
           className="mb-1 w-full text-[10px] text-neutral-400 file:mr-2 file:rounded file:border-0 file:bg-vp-border file:px-2 file:py-1 file:text-neutral-200"
         />
+        <button
+          onClick={() => setMainLEDImage(TEST_PATTERN_URL)}
+          className="mb-1 rounded border border-vp-accent px-2 py-0.5 text-[10px] text-vp-accent"
+        >
+          🔴🔵 テストパターンを表示(診断用)
+        </button>
+        <br />
         {mainLEDImageDataUrl && (
           <button
             onClick={() => setMainLEDImage(null)}

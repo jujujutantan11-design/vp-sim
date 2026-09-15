@@ -4,6 +4,26 @@ import * as THREE from "three";
 const MAX_TEXTURE_DIMENSION = 2048;
 
 /**
+ * A tiny, hand-built red/blue/green/yellow checkerboard, embedded
+ * directly as an SVG data URI (no file upload, no fetch, no
+ * createImageBitmap). Used as a diagnostic bypass: if THIS renders
+ * correctly on a surface while every uploaded image renders white, the
+ * bug is somewhere in the upload/decode pipeline; if THIS also renders
+ * white, the bug is in the material/renderer setup itself, independent
+ * of how the image data got there.
+ */
+export const TEST_PATTERN_URL =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8">' +
+      '<rect width="4" height="4" fill="red"/>' +
+      '<rect x="4" width="4" height="4" fill="blue"/>' +
+      '<rect y="4" width="4" height="4" fill="lime"/>' +
+      '<rect x="4" y="4" width="4" height="4" fill="yellow"/>' +
+      "</svg>"
+  );
+
+/**
  * Loads an image (data URL, blob URL, or regular URL) and returns a
  * THREE.Texture backed by an ImageBitmap, downscaled to a WebGL-safe
  * size.
@@ -27,13 +47,13 @@ const MAX_TEXTURE_DIMENSION = 2048;
  */
 export function useImageTexture(url: string | null): THREE.Texture | null {
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
-  const currentRef = useRef<{ texture: THREE.Texture; bitmap: ImageBitmap } | null>(null);
+  const currentRef = useRef<{ texture: THREE.Texture; bitmap: ImageBitmap | null } | null>(null);
 
   useEffect(() => {
     if (!url) {
       if (currentRef.current) {
         currentRef.current.texture.dispose();
-        currentRef.current.bitmap.close();
+        currentRef.current.bitmap?.close();
         currentRef.current = null;
       }
       setTexture(null);
@@ -41,6 +61,33 @@ export function useImageTexture(url: string | null): THREE.Texture | null {
     }
 
     let cancelled = false;
+
+    // Diagnostic bypass path: load the embedded test pattern via the
+    // simplest possible route (plain THREE.TextureLoader, no fetch, no
+    // createImageBitmap, no canvas) -- see TEST_PATTERN_URL above.
+    if (url === TEST_PATTERN_URL) {
+      const loader = new THREE.TextureLoader();
+      loader.load(url, (tex) => {
+        if (cancelled) {
+          tex.dispose();
+          return;
+        }
+        console.log("[useImageTexture] TEST PATTERN loaded via plain TextureLoader");
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.generateMipmaps = false;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.NearestFilter; // keep checkerboard crisp
+        tex.needsUpdate = true;
+        if (currentRef.current) {
+          currentRef.current.texture.dispose();
+        }
+        currentRef.current = { texture: tex, bitmap: null };
+        setTexture(tex);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
 
     (async () => {
       try {
@@ -118,7 +165,7 @@ export function useImageTexture(url: string | null): THREE.Texture | null {
     return () => {
       if (currentRef.current) {
         currentRef.current.texture.dispose();
-        currentRef.current.bitmap.close();
+        currentRef.current.bitmap?.close();
         currentRef.current = null;
       }
     };
