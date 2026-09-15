@@ -54,8 +54,7 @@ export function CeilingLED({ config, displayMode = "solid", imageUrl = null, fit
       rotation={[Math.PI / 2, 0, 0]} // rotate plane to face downward (-Y)
     >
       <meshStandardMaterial
-        color={texture ? "#ffffff" : "#4a3f1e"}
-        map={texture ?? undefined}
+        color={texture ? "#000000" : "#4a3f1e"}
         side={THREE.DoubleSide}
         wireframe={displayMode === "wireframe"}
         transparent={displayMode === "transparent"}

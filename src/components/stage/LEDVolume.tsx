@@ -139,8 +139,7 @@ export function LEDVolume({
   return (
     <mesh geometry={geometry} name="MainLEDVolume">
       <meshStandardMaterial
-        color={texture ? "#ffffff" : displayMode === "wireframe" ? "#3b82f6" : "#1e3a5f"}
-        map={texture ?? undefined}
+        color={texture ? "#000000" : displayMode === "wireframe" ? "#3b82f6" : "#1e3a5f"}
         side={THREE.DoubleSide}
         wireframe={displayMode === "wireframe"}
         emissive={texture ? "#ffffff" : displayMode === "solid" ? "#0f2744" : "#000000"}
