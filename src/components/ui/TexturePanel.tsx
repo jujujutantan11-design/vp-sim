@@ -34,11 +34,18 @@ export function TexturePanel() {
   const [isProcessing, setIsProcessing] = useState<"main" | "ceiling" | null>(null);
 
   async function handleMainFile(e: ChangeEvent<HTMLInputElement>) {
+    console.log("[TexturePanel] handleMainFile fired");
     const file = e.target.files?.[0];
+    console.log("[TexturePanel] file:", file ? `${file.name} (${file.size} bytes, ${file.type})` : "none");
     if (!file) return;
     setIsProcessing("main");
     try {
-      setMainLEDImage(await downscaleImageFile(file));
+      const dataUrl = await downscaleImageFile(file);
+      console.log("[TexturePanel] downscale complete, dataUrl length:", dataUrl.length);
+      setMainLEDImage(dataUrl);
+      console.log("[TexturePanel] setMainLEDImage called");
+    } catch (err) {
+      console.error("[TexturePanel] downscaleImageFile FAILED:", err);
     } finally {
       setIsProcessing(null);
       e.target.value = "";
