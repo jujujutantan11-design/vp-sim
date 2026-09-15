@@ -59,7 +59,10 @@ export function StageView() {
       <color attach="background" args={["#0a0c0f"]} />
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 15, 5]} intensity={0.8} castShadow />
-      <gridHelper args={[60, 60, "#2a2f38", "#1a1e24"]} position={[0, -stage.platform.height, 0]} />
+      <gridHelper
+        args={[60, 60, "#2a2f38", "#1a1e24"]}
+        position={[0, -stage.platform.height - 0.05, 0]}
+      />
 
       <Platform config={stage.platform} mainLED={stage.mainLED} />
       <LEDVolume config={stage.mainLED} bottomY={calculateMainLEDBottomY(stage.mainLED, stage.platform)} />
