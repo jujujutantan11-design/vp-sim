@@ -3,6 +3,54 @@
 Virtual Production camera-planning tool for the LED Volume at TOEI TOKYO
 STUDIOS, No.11 Stage.
 
+## Status: Phase 4 — Safety Zone + Safe Shooting Area
+
+Adds the 1m safety-zone visualization and the Safe Shooting Area engine
+on top of the verified Phase 1-3 base:
+
+- `src/utils/safety.ts` — `horizontalDistanceToMainLED()` is a proper
+  nearest-surface utility that respects the 270° arc's angular boundary
+  (spec §22): inside the arc it's the straight radial distance, inside
+  the opening sector it's the distance to the nearest arc-boundary edge
+  -- not a naive `R - rCamera` everywhere. `calculateSafetyAtPosition()`
+  combines wall + ceiling distance into SAFE/WARNING/VIOLATION using
+  centralized thresholds (`SAFETY_THRESHOLDS` in
+  `src/config/thresholds.ts`).
+- `SafetyZone` component — translucent boundary ring at
+  `radius - safetyZone.distance`, following the same arc, colored live
+  by the current camera's safety status. Never blocks camera movement,
+  per spec §4. **Also fixes a pre-existing bug**: the STAGE panel's
+  safety-zone show/hide toggle was wired to a store flag with no
+  consumer since Phase 1 (SafetyZone didn't exist yet) -- it's now
+  correctly connected.
+- `src/utils/safeArea.ts` — `calculateSafeArea()` evaluates a 2D X/Z
+  grid at the camera's current height (spec §23), running a reduced
+  16×9 coverage sample plus a safety check per cell, with both
+  FIXED_ORIENTATION and LOOK_AT_STAGE_CENTER modes (spec §24).
+  `calculateMovementMargin()` walks the computed grid outward from the
+  current position along the camera's forward/back/left/right axes
+  (spec §26).
+- `useSafeAreaStore` — holds the last computed result and marks it
+  STALE (never silently recomputes) whenever camera/lens/stage change,
+  per spec §10D/§25. Calculation is triggered explicitly via the
+  撮影可能範囲を計算 button in the new SAFE AREA panel.
+- `SafeAreaOverlay` — renders the grid as one merged per-vertex-colored
+  mesh (not one draw call per cell) on the stage floor.
+- ANALYSIS panel now also shows nearest-LED safety distance/status.
+- `tests/safety.test.ts`, `tests/safeArea.test.ts` — angular-boundary
+  nearest-surface checks, SAFE/WARNING/VIOLATION threshold checks, grid
+  classification sanity, and movement-margin sign checks.
+
+**Not yet implemented** (candidates for a later pass): minimum-safe-
+focal-length solver (§10M), automatic "recommended correction" search
+(§27), Web Worker offload for the Safe Area calculation (§25 -- it's
+synchronous today and may pause the UI briefly on fine grid spacings),
+texture upload, floor-plan overlay, save/load (Phase 5).
+
+---
+
+_Prior phase notes below, kept for history._
+
 ## Status: Phase 3 — Ray/LED Coverage Engine
 
 Adds the analytic ray/LED intersection engine and coverage sampling on

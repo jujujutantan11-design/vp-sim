@@ -37,3 +37,39 @@ export interface CoverageResult {
 
   computeTimeMs: number;
 }
+
+/** Safety-zone evaluation for a single world position (spec §22). */
+export interface SafetyResult {
+  nearestDistance: number;
+  wallDistance: number;
+  ceilingDistance: number;
+  status: ShootingStatus;
+}
+
+export type SafeAreaCellStatus = "SAFE" | "WARNING" | "UNSAFE";
+
+export interface SafeAreaCell {
+  x: number;
+  z: number;
+  status: SafeAreaCellStatus;
+}
+
+export type OrientationMode = "FIXED_ORIENTATION" | "LOOK_AT_STAGE_CENTER";
+
+export interface SafeAreaResult {
+  cells: SafeAreaCell[];
+  gridSpacingM: number;
+  cameraHeightM: number;
+  orientationMode: OrientationMode;
+  computeTimeMs: number;
+  /** Half-extent (meters) of the square area evaluated, centered on the origin. */
+  extentM: number;
+}
+
+export interface MovementMargin {
+  forwardM: number;
+  backwardM: number;
+  leftM: number;
+  rightM: number;
+}
+

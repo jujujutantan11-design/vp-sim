@@ -1,5 +1,6 @@
 import { useSimulatedCamera } from "@/components/camera/useSimulatedCamera";
 import { useCoverage } from "@/components/camera/useCoverage";
+import { useSafety } from "@/components/camera/useSafety";
 import type { ShootingStatus } from "@/types/simulator";
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -35,6 +36,7 @@ function EdgeBadge({ label, status }: { label: string; status: "OK" | "WARNING" 
 export function AnalysisPanel() {
   const { fov, sensorWidthMm, sensorHeightMm, cameraName, sensorModeName } = useSimulatedCamera();
   const coverage = useCoverage();
+  const safety = useSafety();
 
   return (
     <div className="border-b border-vp-border px-3 py-3">
@@ -66,9 +68,13 @@ export function AnalysisPanel() {
       <EdgeBadge label="LEFT" status={coverage.edges.left} />
       <EdgeBadge label="RIGHT" status={coverage.edges.right} />
 
+      <div className="my-2 border-t border-vp-border" />
+      <div className="mb-1 text-[10px] uppercase tracking-wide text-neutral-500">Safety</div>
+      <Row label="Nearest LED distance" value={`${safety.nearestDistance.toFixed(2)} m`} />
+      <Row label="Safety status" value={safety.status} />
+
       <div className="mt-3 text-[10px] text-neutral-600">
-        Sampled {coverage.gridWidth}×{coverage.gridHeight} rays ({coverage.computeTimeMs.toFixed(1)} ms). Safety
-        distance / movement margin arrive in Phase 4.
+        Sampled {coverage.gridWidth}×{coverage.gridHeight} rays ({coverage.computeTimeMs.toFixed(1)} ms).
       </div>
     </div>
   );

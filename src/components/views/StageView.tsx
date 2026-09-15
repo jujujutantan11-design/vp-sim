@@ -10,6 +10,9 @@ import { CameraModel } from "@/components/camera/CameraModel";
 import { CameraFrustum } from "@/components/camera/CameraFrustum";
 import { CameraTransformControls } from "@/components/camera/CameraTransformControls";
 import { CameraView } from "@/components/views/CameraView";
+import { SafetyZone } from "@/components/stage/SafetyZone";
+import { SafeAreaOverlay } from "@/components/views/SafeAreaOverlay";
+import { useSafeAreaStore } from "@/store/safeAreaStore";
 import { calculateMainLEDBottomY } from "@/utils/ledMath";
 import type { ViewMode } from "@/store/simulatorStore";
 
@@ -40,6 +43,8 @@ export function StageView() {
   const showAxes = useSimulatorStore((s) => s.showAxes);
   const isTransformDragging = useSimulatorStore((s) => s.isTransformDragging);
   const transformMode = useSimulatorStore((s) => s.transformMode);
+  const safeAreaResult = useSafeAreaStore((s) => s.result);
+  const showSafetyZone = useSimulatorStore((s) => s.showSafetyZone);
 
   const pose = useMemo(
     () => getEditorCameraPose(viewMode, stage.mainLED.radius),
@@ -68,6 +73,9 @@ export function StageView() {
       <LEDVolume config={stage.mainLED} bottomY={calculateMainLEDBottomY(stage.mainLED, stage.platform)} />
       <CeilingLED config={stage.ceilingLED} />
       {showAxes && <StageAxes openingDirection={stage.mainLED.openingDirection} />}
+
+      <SafetyZone mainLED={stage.mainLED} safetyZone={stage.safetyZone} show={showSafetyZone} />
+      <SafeAreaOverlay result={safeAreaResult} />
 
       <CameraModel />
       <CameraFrustum />
