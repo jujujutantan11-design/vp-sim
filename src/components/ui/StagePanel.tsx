@@ -31,7 +31,7 @@ export function StagePanel() {
   const { mainLED, ceilingLED, safetyZone } = stage;
 
   return (
-    <div className="flex w-64 shrink-0 flex-col overflow-y-auto border-r border-vp-border bg-vp-panel">
+    <div>
       <div className="border-b border-vp-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
         {t("stageSettings")}
       </div>

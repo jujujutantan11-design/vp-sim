@@ -6,6 +6,10 @@ import { LEDVolume } from "@/components/stage/LEDVolume";
 import { CeilingLED } from "@/components/stage/CeilingLED";
 import { Platform } from "@/components/stage/Platform";
 import { StageAxes } from "@/components/stage/StageAxes";
+import { CameraModel } from "@/components/camera/CameraModel";
+import { CameraFrustum } from "@/components/camera/CameraFrustum";
+import { CameraTransformControls } from "@/components/camera/CameraTransformControls";
+import { CameraView } from "@/components/views/CameraView";
 import type { ViewMode } from "@/store/simulatorStore";
 
 /**
@@ -33,6 +37,8 @@ export function StageView() {
   const stage = useSimulatorStore((s) => s.stage);
   const viewMode = useSimulatorStore((s) => s.viewMode);
   const showAxes = useSimulatorStore((s) => s.showAxes);
+  const isTransformDragging = useSimulatorStore((s) => s.isTransformDragging);
+  const transformMode = useSimulatorStore((s) => s.transformMode);
 
   const pose = useMemo(
     () => getEditorCameraPose(viewMode, stage.mainLED.radius),
@@ -40,11 +46,7 @@ export function StageView() {
   );
 
   if (viewMode === "CAMERA") {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-black text-neutral-500 text-sm">
-        CAMERA VIEW is available starting Phase 2 (simulated cinema camera).
-      </div>
-    );
+    return <CameraView />;
   }
 
   return (
@@ -63,7 +65,15 @@ export function StageView() {
       <CeilingLED config={stage.ceilingLED} />
       {showAxes && <StageAxes openingDirection={stage.mainLED.openingDirection} />}
 
-      <OrbitControls makeDefault target={[0, stage.mainLED.height / 2, 0]} />
+      <CameraModel />
+      <CameraFrustum />
+      <CameraTransformControls mode={transformMode} />
+
+      <OrbitControls
+        makeDefault
+        enabled={!isTransformDragging}
+        target={[0, stage.mainLED.height / 2, 0]}
+      />
       <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
         <GizmoViewport />
       </GizmoHelper>

@@ -3,67 +3,72 @@
 Virtual Production camera-planning tool for the LED Volume at TOEI TOKYO
 STUDIOS, No.11 Stage.
 
-## Status: Phase 1 — Geometry Foundation
+## Status: Phase 2 — Cinema Camera
 
-This checkout implements **only** Phase 1 per the incremental build
-process:
+Phase 1 (geometry foundation) was verified working by the user on-device
+(Codespaces + npm install/dev/tsc/test all passed). This checkout adds
+Phase 2 on top of that verified base:
 
-- React + TypeScript + Vite + Three.js / React Three Fiber / drei +
-  Zustand + Tailwind project skeleton
-- `TOEI_NO11` stage preset (config/stages/toeiNo11.ts) holding all
-  supplied facility figures verbatim, including both the published
-  nominal diameter (~12.0 m) and the drawing-reference diameter
-  (12.636 m) as distinct, non-reconciled values
-- Mathematically defined 270° Main LED cylindrical surface
-  (deliberate BufferGeometry, not a generic decorative cylinder),
-  parameterized as `x = R sin(theta)`, `z = R cos(theta)`, matching
-  `src/utils/coordinates.ts` exactly so Phase 3's ray/LED intersection
-  math can reuse the same convention
-- Rectangular, downward-facing Ceiling LED
-- Platform slab, coordinate axes with opening-direction label
-- Editor camera + OrbitControls with Perspective / Top / Front / Side
-  view switching (Camera view is stubbed — arrives Phase 2)
-- Stage Diagnostics panel surfacing (not hiding) the arc-length vs.
-  published-wall-width discrepancy and the two diameter sources
-- Unit tests for the arc-angle/opening-direction math and the
-  diagnostics calculations
+- `src/types/camera.ts`, `src/config/cameras/`, `src/config/lenses/` —
+  Camera & Lens Database (spec §10A-10O), independent from stage config
+- ARRI ALEXA 35 sensor modes populated from ARRI's own published
+  technical specifications (verified: true, source recorded per entry) —
+  NOT invented, NOT sourced from the TOEI facility doc
+- ARRI Signature Zoom 24-75mm (TOEI_DOCUMENTED) and ARRI Signature Prime
+  (focal-length list UNVERIFIED as a complete lineup; 18mm/125mm flagged
+  as specifically TOEI-confirmed) — "11st常設機材のみ" filter implemented
+- `src/utils/cameraMath.ts` — HFOV/VFOV/DFOV formulas, pan/tilt/roll →
+  quaternion (explicit YXZ Euler order, documented to avoid ambiguity),
+  and `buildSimulatedCamera` as the single source of truth for the
+  simulated camera's actual `THREE.PerspectiveCamera` / projection matrix
+- `useSimulatedCamera` hook — the one place FOV/camera-object logic
+  lives; frustum viz, camera monitor, and (Phase 3) the coverage engine
+  will all consume this same object
+- `CameraFrustum` — real frustum via `THREE.CameraHelper` off the actual
+  camera (not an approximated pyramid)
+- `CameraView` — second Canvas rendering through the simulated camera,
+  with center-cross / frame-boundary / HFOV·VFOV telemetry overlay
+- `CameraTransformControls` — drei TransformControls driving an
+  invisible proxy object that writes back to camera store (translate +
+  rotate modes); OrbitControls (editor camera) is explicitly NEVER
+  touched by this, and is disabled only while dragging to avoid input
+  conflicts
+- CAMERA / LENS / POSITION / ANALYSIS UI panels
+- `tests/cameraMath.test.ts` — FOV formula checks against the ALEXA 35
+  Open Gate sensor, monotonicity vs. focal length, quaternion sanity
+  checks (pan/tilt rotate the forward vector as expected)
 
-**Not yet implemented** (by design — later phases per the spec):
-simulated cinema camera, FOV/frustum, camera monitor, ray/LED coverage
-engine, safety-zone visualization, Safe Shooting Area, texture upload,
-floor-plan overlay, project save/load.
+**Not yet implemented** (later phases): ray/LED coverage engine, safety
+zone, Safe Shooting Area, texture upload, floor-plan overlay, save/load.
 
-## ⚠️ Important — build not yet verified in this environment
+## ⚠️ Build not yet verified for Phase 2
 
-This code was written in a sandboxed container **without internet
-access**, so `npm install` could not be run here and `tsc` / `vitest` /
-`vite build` have **not actually been executed** against it. Please run
-the verification steps below on your machine and report back anything
-that fails — I'll fix it before we move to Phase 2.
-
-## Setup
-
-```bash
-npm install
-npm run dev        # http://localhost:5173
-```
-
-## Verify
+Same caveat as Phase 1: written without network access in this sandbox,
+so Phase 2 additions have **not been run through `tsc`/`vitest`/`vite
+build`** yet. Please pull the updated files into your existing
+Codespace/StackBlitz and run:
 
 ```bash
-npx tsc -b --noEmit   # type-check
-npm run test          # vitest
-npm run build          # production build
+npm install   # only needed if package.json changed / first time
+npx tsc -b --noEmit
+npm run test
+npm run build
+npm run dev
 ```
 
 ## Things to check when you run it
 
-1. The Main LED wall should read as a 270° arc with a clear ~90° gap
-   facing +Z (toward the default camera in Perspective view).
-2. Diagnostics panel (right side) should show a calculated arc length
-   of ~29.77 m against the published 30.0 m wall width — this
-   discrepancy is intentional, not a bug.
-3. Top / Front / Side / Perspective view buttons should each reposition
-   the editor camera correctly.
-4. Ceiling LED should appear as a flat panel above the stage, facing
-   downward, toggleable in the left panel.
+1. Switching to "カメラ" (Camera) view in the top bar should show a
+   rendered monitor with a center cross and HFOV/VFOV readout — not a
+   placeholder message anymore.
+2. Changing focal length (slider or quick buttons in the LENS panel)
+   should immediately change the HFOV/VFOV numbers in the ANALYSIS
+   panel and visibly change the frustum wireframe in the 3D stage view.
+3. Changing Sensor Mode in the CAMERA panel should also update FOV
+   immediately.
+4. Dragging the on-screen gizmo (attached to the camera) in Perspective
+   view should move the camera and update the numeric Position/Pan/Tilt
+   fields in the CAMERA panel, and vice versa (editing the numeric
+   fields should move the gizmo).
+5. Orbiting the editor view (drag on empty space) should never move the
+   simulated camera or its frustum.

@@ -27,7 +27,7 @@ export function DiagnosticsPanel() {
   const arcDiffSignificant = Math.abs(diagnostics.arcLengthDifference) > 0.05;
 
   return (
-    <div className="flex w-72 shrink-0 flex-col overflow-y-auto border-l border-vp-border bg-vp-panel">
+    <div>
       <div className="border-b border-vp-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
         {t("diagnostics")}
       </div>
